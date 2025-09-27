@@ -1,0 +1,104 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spotify Redirect</title>
+  <style>
+    :root {
+      --bg1: #121212;
+      --bg2: #1db954;
+      --card: #181818;
+      --text: #fff;
+      --muted: #aaa;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; }
+    body {
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--bg1) 40%, var(--bg2));
+      color: var(--text);
+    }
+    .card {
+      background: var(--card);
+      padding: 2rem;
+      border-radius: 18px;
+      max-width: 600px;
+      width: 92%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      animation: fadeIn 1.2s ease;
+    }
+    h1 { font-size: 2rem; margin: 0 0 1rem; }
+    p { color: var(--muted); margin-bottom: 1rem; }
+    .codebox {
+      background: #0d0d0d;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 1rem;
+      font-family: monospace;
+      margin-bottom: 1rem;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    button {
+      background: var(--bg2);
+      color: #fff;
+      font-weight: bold;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.3s;
+    }
+    button:hover { transform: translateY(-2px); background: #1ed760; }
+    .ok { margin-top: 0.5rem; color: #9f9; display: none; }
+    .error { margin-top: 0.5rem; color: #f99; display: none; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px);} to {opacity:1; transform:translateY(0);} }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Spotify Redirect</h1>
+    <p>If you see a code below, copy it and paste it back into your Wallpaper Engine player.</p>
+
+    <div id="codeBox" class="codebox">No code detected.</div>
+    <button id="copyBtn">Copy Code</button>
+    <div id="ok" class="ok">✓ Copied to clipboard</div>
+    <div id="err" class="error"></div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    const error = params.get('error');
+    const codeBox = document.getElementById('codeBox');
+    const copyBtn = document.getElementById('copyBtn');
+    const ok = document.getElementById('ok');
+    const err = document.getElementById('err');
+
+    if(error){
+      codeBox.textContent = 'Error: ' + error;
+      err.style.display = 'block';
+      err.textContent = 'Make sure your Redirect URI in Spotify Developer Dashboard matches this URL.';
+    }
+
+    if(code){
+      codeBox.textContent = code;
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(code);
+          ok.style.display = 'block';
+          setTimeout(()=> ok.style.display='none', 2000);
+        } catch(e){
+          alert('Could not copy. Copy manually.');
+        }
+      });
+    } else if(!error){
+      codeBox.textContent = 'Waiting for Spotify to redirect with ?code=...';
+    }
+  </script>
+</body>
+</html>
