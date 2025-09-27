@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spotify Redirect</title>
+  <style>
+    :root { --bg1:#121212; --bg2:#1db954; --card:#181818; --text:#fff; --muted:#aaa; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; }
+    body { display: grid; place-items: center; background: linear-gradient(135deg,var(--bg1) 40%, var(--bg2)); color: var(--text); }
+    .card { background: var(--card); padding: 2rem; border-radius: 18px; max-width: 680px; width: 92%; text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+    h1 { font-size: 2rem; margin: 0 0 1rem; }
+    p { color: var(--muted); margin-bottom: 1rem; }
+    .codebox { background:#0d0d0d; border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:1rem; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; margin-bottom:1rem; overflow-x:auto; white-space:nowrap; }
+    button { background:#1db954; color:#fff; font-weight:700; border:0; padding:0.6rem 1.2rem; border-radius:10px; cursor:pointer; transition: transform .15s ease, background .3s; }
+    button:hover { transform: translateY(-2px); background:#1ed760; }
+    .ok { margin-top: .5rem; color:#9f9; display:none; }
+    .error { margin-top: .5rem; color:#f99; display:none; }
+    details { text-align:left; margin-top: 12px; }
+    .small { font-size:12px; color:#bbb; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div id="urlRow" class="small" style="word-break:break-all; margin-bottom:10px; opacity:.9"></div>
+    <h1>Spotify Redirect</h1>
+    <p>If you see a code below, copy it and paste it back into your Wallpaper Engine player.</p>
+
+    <div id="codeBox" class="codebox">No code detected.</div>
+    <button id="copyBtn">Copy Code</button>
+    <div id="ok" class="ok">✓ Copied to clipboard</div>
+    <div id="err" class="error"></div>
+
+    <details>
+      <summary>Diagnostics</summary>
+      <div class="codebox" id="diag"></div>
+      <ul class="small">
+        <li><b>If you see <code>#access_token=...</code> in the URL:</b> you used the Implicit flow. Switch to <b>Authorization Code + PKCE</b> (<code>response_type=code</code>).</li>
+        <li><b>Trailing slash mismatch:</b> Your Spotify Redirect URI must match this page’s URL <i>exactly</i>, including the trailing <code>/</code>.</li>
+        <li><b>Wrong path:</b> If your Redirect URI ends with <code>/callback</code>, this page must be deployed to <code>/callback/index.html</code>.</li>
+        <li><b>Vercel preview domains:</b> Add the preview URL to Spotify, or use the production domain for testing.</li>
+      </ul>
+    </details>
+  </div>
+
+  <script>
+    const urlRow = document.getElementById('urlRow');
+    urlRow.textContent = window.location.href;
+
+    const params = new URLSearchParams(window.location.search);
+    const hash = new URLSearchParams(window.location.hash.slice(1));
+    const code = params.get('code');
+    const error = params.get('error');
+    const accessTokenInHash = hash.get('access_token');
+    const state = params.get('state') || hash.get('state');
+
+    const codeBox = document.getElementById('codeBox');
+    const copyBtn = document.getElementById('copyBtn');
+    const ok = document.getElementById('ok');
+    const err = document.getElementById('err');
+    const diag = document.getElementById('diag');
+
+    function showDiag(){
+      const lines = [
+        `search: ${window.location.search || '(empty)'}`,
+        `hash: ${window.location.hash || '(empty)'}`,
+        `code(param): ${code || '(none)'}`,
+        `error(param): ${error || '(none)'}`,
+        `access_token(hash): ${accessTokenInHash || '(none)'}`,
+        `state: ${state || '(none)'}`
+      ];
+      diag.textContent = lines.join('\n');
+    }
+    showDiag();
+
+    if(error){
+      codeBox.textContent = 'Error: ' + error;
+      err.style.display = 'block';
+      err.textContent = 'Spotify returned an error. Check Redirect URI and scopes.';
+    }
+
+    if(code){
+      codeBox.textContent = code;
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(code);
+          ok.style.display = 'block';
+          setTimeout(()=> ok.style.display='none', 2000);
+        } catch(e){
+          alert('Could not copy. Copy manually.');
+        }
+      });
+    } else if(accessTokenInHash){
+      codeBox.textContent = 'You are using the Implicit Flow (received access_token in URL hash). Switch your authorize request to response_type=code with PKCE to receive a code here.';
+    } else if(!error){
+      codeBox.textContent = 'Waiting for Spotify to redirect with ?code=...';
+    }
+  </script>
+</body>
+</html>
